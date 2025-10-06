@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemMachine API UI</title>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .api-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .response-area {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+
+        .response-area h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .response-content {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .status-success {
+            border-left-color: #28a745;
+        }
+
+        .status-error {
+            border-left-color: #dc3545;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .endpoint-info {
+            background: #e8f4fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .endpoint-info h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .endpoint-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: #28a745;
+        }
+
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+
+        .input-mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .toggle-btn:hover:not(.active) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .json-editor {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .json-editor:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .json-validation {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .json-validation.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .json-validation.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .form-section {
+            transition: opacity 0.3s;
+        }
+
+        .form-section.hidden {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body x-data="memMachineApp()">
+    <div class="container">
+        <div class="header">
+            <h1>MemMachine API Interface</h1>
+            <p>Interactive UI for testing MemMachine memory system APIs</p>
+        </div>
+
+        <!-- API Configuration -->
+        <div class="api-section">
+            <h2>API Configuration</h2>
+            <div class="form-group">
+                <label for="baseUrl">Base URL:</label>
+                <input type="text" x-model="config.baseUrl" placeholder="http://127.0.0.1:8080/v1">
+            </div>
+            <div class="form-group">
+                <label>Server Status:</label>
+                <div x-show="status.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Checking server...</p>
+                </div>
+                <div x-show="!status.loading" class="response-content" :class="status.connected ? 'status-success' : 'status-error'">
+                    <span class="status-indicator" :class="status.connected ? 'status-connected' : 'status-disconnected'"></span>
+                    <span x-text="status.message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memory Management -->
+        <div class="api-section">
+            <h2>Memory Management</h2>
+            
+            <div class="endpoint-info">
+                <h4>Add Memory</h4>
+                <p>Add a new memory episode to the system</p>
+            </div>
+            
+                <!-- Input Mode Toggle -->
+            <div class="input-mode-toggle">
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.addMemory === 'form' }" @click="inputMode.addMemory = 'form'">
+                    📝 Form Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.addMemory === 'json' }" @click="inputMode.addMemory = 'json'">
+                    📄 JSON Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.addMemory === 'raw' }" @click="inputMode.addMemory = 'raw'">
+                    🔧 Raw Input
+                </button>
+            </div>
+            
+            <!-- JSON Input Mode -->
+            <div x-show="inputMode.addMemory === 'json'" class="form-group">
+                <label>JSON Payload:</label>
+                <textarea 
+                    x-model="jsonPayloads.addMemory" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "producer": "system",
+  "produced_for": "user1",
+  "episode_content": "This is a memory episode",
+  "episode_type": "conversation",
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "source": "chat"
+  }
+}'></textarea>
+                <div x-show="jsonValidation.addMemory.error" class="json-validation error" x-text="jsonValidation.addMemory.error"></div>
+                <div x-show="jsonValidation.addMemory.success && !jsonValidation.addMemory.error" class="json-validation success" x-text="jsonValidation.addMemory.success"></div>
+                <button type="button" class="btn" @click="addMemory()" x-show="inputMode.addMemory === 'json'">Add Memory</button>
+            </div>
+            
+            <!-- Raw Input Mode -->
+            <div x-show="inputMode.addMemory === 'raw'" class="form-group">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Content Type:</label>
+                        <select x-model="rawPayloads.addMemory.contentType" class="form-group">
+                            <option value="application/json">application/json</option>
+                            <option value="application/xml">application/xml</option>
+                            <option value="text/plain">text/plain</option>
+                            <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                            <option value="multipart/form-data">multipart/form-data</option>
+                            <option value="text/xml">text/xml</option>
+                            <option value="application/yaml">application/yaml</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" x-show="rawPayloads.addMemory.contentType === 'custom'">
+                        <label>Custom Content Type:</label>
+                        <input type="text" x-model="rawPayloads.addMemory.customContentType" placeholder="Enter custom content type">
+                    </div>
+                </div>
+                
+                <label>Raw Payload:</label>
+                <textarea 
+                    x-model="rawPayloads.addMemory.payload" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "producer": "system",
+  "produced_for": "user1",
+  "episode_content": "This is a memory episode",
+  "episode_type": "conversation",
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "source": "chat"
+  }
+}
+
+<!-- OR -->
+
+session.session_id=session123&session.group_id=group456&producer=system&produced_for=user1&episode_content=This%20is%20a%20memory%20episode&episode_type=conversation
+
+<!-- OR -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<memory>
+  <session>
+    <session_id>session123</session_id>
+    <group_id>group456</group_id>
+    <agent_id>agent1,agent2</agent_id>
+    <user_id>user1,user2</user_id>
+  </session>
+  <producer>system</producer>
+  <produced_for>user1</produced_for>
+  <episode_content>This is a memory episode</episode_content>
+  <episode_type>conversation</episode_type>
+  <metadata>
+    <timestamp>2024-01-01T00:00:00Z</timestamp>
+    <source>chat</source>
+  </metadata>
+</memory>'></textarea>
+                
+                <button type="button" class="btn" @click="addMemory()" x-show="inputMode.addMemory === 'raw'">Add Memory</button>
+            </div>
+            
+            <!-- Form Input Mode -->
+            <form @submit.prevent="addMemory()" class="form-section" :class="{ hidden: inputMode.addMemory === 'json' || inputMode.addMemory === 'raw' }">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sessionId">Session ID:</label>
+                        <input type="text" x-model="forms.addMemory.sessionId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="groupId">Group ID:</label>
+                        <input type="text" x-model="forms.addMemory.groupId">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="agentIds">Agent IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.addMemory.agentIds" placeholder="agent1,agent2">
+                    </div>
+                    <div class="form-group">
+                        <label for="userIds">User IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.addMemory.userIds" placeholder="user1,user2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="producer">Producer:</label>
+                        <input type="text" x-model="forms.addMemory.producer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="producedFor">Produced For:</label>
+                        <input type="text" x-model="forms.addMemory.producedFor" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodeContent">Episode Content:</label>
+                    <textarea x-model="forms.addMemory.episodeContent" required placeholder="Enter the memory content..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="episodeType">Episode Type:</label>
+                        <input type="text" x-model="forms.addMemory.episodeType" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="metadata">Metadata (JSON):</label>
+                        <textarea x-model="forms.addMemory.metadata" placeholder='{"key": "value"}'></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">Add Memory</button>
+            </form>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.addMemory.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Adding memory...</p>
+                </div>
+                <div x-show="!responses.addMemory.loading && responses.addMemory.data" class="response-content status-success" x-text="JSON.stringify(responses.addMemory.data, null, 2)"></div>
+                <div x-show="!responses.addMemory.loading && responses.addMemory.error" class="response-content status-error" x-text="responses.addMemory.error"></div>
+            </div>
+        </div>
+
+        <!-- Memory Search -->
+        <div class="api-section">
+            <h2>Memory Search</h2>
+            
+            <div class="endpoint-info">
+                <h4>Search Memories</h4>
+                <p>Search both episodic and profile memories</p>
+            </div>
+            
+            <!-- Input Mode Toggle -->
+            <div class="input-mode-toggle">
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.searchMemory === 'form' }" @click="inputMode.searchMemory = 'form'">
+                    📝 Form Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.searchMemory === 'json' }" @click="inputMode.searchMemory = 'json'">
+                    📄 JSON Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.searchMemory === 'raw' }" @click="inputMode.searchMemory = 'raw'">
+                    🔧 Raw Input
+                </button>
+            </div>
+            
+            <!-- JSON Input Mode -->
+            <div x-show="inputMode.searchMemory === 'json'" class="form-group">
+                <label>JSON Payload:</label>
+                <textarea 
+                    x-model="jsonPayloads.searchMemory" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "query": "What did we discuss about the project?",
+  "filter": {
+    "date_range": "2024-01-01",
+    "episode_type": "conversation"
+  },
+  "limit": 10
+}'></textarea>
+                <div x-show="jsonValidation.searchMemory.error" class="json-validation error" x-text="jsonValidation.searchMemory.error"></div>
+                <div x-show="jsonValidation.searchMemory.success && !jsonValidation.searchMemory.error" class="json-validation success" x-text="jsonValidation.searchMemory.success"></div>
+                <button type="button" class="btn" @click="searchMemory()" x-show="inputMode.searchMemory === 'json'">
+
+Search Memories</button>
+            </div>
+            
+            <!-- Raw Input Mode -->
+            <div x-show="inputMode.searchMemory === 'raw'" class="form-group">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Content Type:</label>
+                        <select x-model="rawPayloads.searchMemory.contentType">
+                            <option value="application/json">application/json</option>
+                            <option value="application/xml">application/xml</option>
+                            <option value="text/plain">text/plain</option>
+                            <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" x-show="rawPayloads.searchMemory.contentType === 'custom'">
+                        <label>Custom Content Type:</label>
+                        <input type="text" x-model="rawPayloads.searchMemory.customContentType" placeholder="Enter custom content type">
+                    </div>
+                </div>
+                
+                <label>Raw Payload:</label>
+                <textarea 
+                    x-model="rawPayloads.searchMemory.payload" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "query": "What did we discuss about the project?",
+  "filter": {
+    "date_range": "2024-01-01",
+    "episode_type": "conversation"
+  },
+  "limit": 10
+}
+
+<!-- OR -->
+
+session.session_id=session123&session.group_id=group456&query=What%20did%20we%20discuss&limit=10
+
+<!-- OR -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<search>
+  <session>
+    <session_id>session123</session_id>
+    <group_id>group456</group_id>
+    <agent_id>agent1,agent2</agent_id>
+    <user_id>user1,user2</user_id>
+  </session>
+  <query>What did we discuss about the project?</query>
+  <filter>
+    <date_range>2024-01-01</date_range>
+    <episode_type>conversation</episode_type>
+  </filter>
+  <limit>10</limit>
+</search>'></textarea>
+                
+                <button type="button" class="btn" @click="searchMemory()" x-show="inputMode.searchMemory === 'raw'">Search Memories</button>
+            </div>
+            
+            <!-- Form Input Mode -->
+            <form @submit.prevent="searchMemory()" class="form-section" :class="{ hidden: inputMode.searchMemory === 'json' || inputMode.searchMemory === 'raw' }">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="searchSessionId">Session ID:</label>
+                        <input type="text" x-model="forms.searchMemory.sessionId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="searchGroupId">Group ID:</label>
+                        <input type="text" x-model="forms.searchMemory.groupId">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="searchAgentIds">Agent IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.searchMemory.agentIds" placeholder="agent1,agent2">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchUserIds">User IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.searchMemory.userIds" placeholder="user1,user2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="searchQuery">Search Query:</label>
+                        <input type="text" x-model="forms.searchMemory.query" required placeholder="What are you looking for?">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchLimit">Limit:</label>
+                        <input type="number" x-model="forms.searchMemory.limit" placeholder="10">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="searchFilter">Filter (JSON):</label>
+                    <textarea x-model="forms.searchMemory.filter" placeholder='{"key": "value"}'></textarea>
+                </div>
+                
+                <button type="submit" class="btn">Search Memories</button>
+            </form>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.searchMemory.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Searching memories...</p>
+                </div>
+                <div x-show="!responses.searchMemory.loading && responses.searchMemory.data" class="response-content status-success" x-text="JSON.stringify(responses.searchMemory.data, null, 2)"></div>
+                <div x-show="!responses.searchMemory.loading && responses.searchMemory.error" class="response-content status-error" x-text="responses.searchMemory.error"></div>
+            </div>
+        </div>
+
+        <!-- Session Management -->
+        <div class="api-section">
+            <h2>Session Management</h2>
+            
+            <div class="endpoint-info">
+                <h4>Get All Sessions</h4>
+                <p>Retrieve all available sessions</p>
+            </div>
+            
+            <button type="button" class="btn" @click="getAllSessions()">Get All Sessions</button>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.allSessions.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading sessions...</p>
+                </div>
+                <div x-show="!responses.allSessions.loading && responses.allSessions.data" class="response-content status-success" x-text="JSON.stringify(responses.allSessions.data, null, 2)"></div>
+                <div x-show="!responses.allSessions.loading && responses.allSessions.error" class="response-content status-error" x-text="responses.allSessions.error"></div>
+            </div>
+            
+            <div class="endpoint-info">
+                <h4>Get Sessions by User/Group/Agent</h4>
+                <p>Retrieve sessions filtered by specific criteria</p>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="filterUserId">User ID:</label>
+                    <input type="text" x-model="forms.filterSessions.userId" placeholder="user123">
+                </div>
+                <div class="form-group">
+                    <label for="filterGroupId">Group ID:</label>
+                    <input type="text" x-model="forms.filterSessions.groupId" placeholder="group456">
+                </div>
+                <div class="form-group">
+                    <label for="filterAgentId">Agent ID:</label>
+                    <input type="text" x-model="forms.filterSessions.agentId" placeholder="agent789">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <button type="button" class="btn" @click="getUserSessions()">Get User Sessions</button>
+                <button type="button" class="btn" @click="getGroupSessions()">Get Group Sessions</button>
+                <button type="button" class="btn" @click="getAgentSessions()">Get Agent Sessions</button>
+            </div>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.filteredSessions.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading sessions...</p>
+                </div>
+                <div x-show="!responses.filteredSessions.loading && responses.filteredSessions.data" class="response-content status-success" x-text="JSON.stringify(responses.filteredSessions.data, null, 2)"></div>
+                <div x-show="!responses.filteredSessions.loading && responses.filteredSessions.error" class="response-content status-error" x-text="responses.filteredSessions.error"></div>
+            </div>
+        </div>
+
+        <!-- Additional Memory Endpoints -->
+        <div class="api-section">
+            <h2>Additional Memory Endpoints</h2>
+            
+            <div class="endpoint-info">
+                <h4>Add Episodic Memory</h4>
+                <p>Add memory directly to episodic memory system</p>
+            </div>
+            
+            <!-- Input Mode Toggle -->
+            <div class="input-mode-toggle">
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.addEpisodic === 'form' }" @click="inputMode.addEpisodic = 'form'">
+                    📝 Form Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.addEpisodic === 'json' }" @click="inputMode.addEpisodic = 'json'">
+                    📄 JSON Input
+                </button>
+            </div>
+            
+            <!-- JSON Input Mode -->
+            <div x-show="inputMode.addEpisodic === 'json'" class="form-group">
+                <label>JSON Payload:</label>
+                <textarea 
+                    x-model="jsonPayloads.addEpisodic" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "producer": "system",
+  "produced_for": "user1",
+  "episode_content": "This is an episodic memory",
+  "episode_type": "episode",
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "source": "episodic"
+  }
+}'></textarea>
+                <div x-show="jsonValidation.addEpisodic.error" class="json-validation error" x-text="jsonValidation.addEpisodic.error"></div>
+                <div x-show="jsonValidation.addEpisodic.success && !jsonValidation.addEpisodic.error" class="json-validation success" x-text="jsonValidation.addEpisodic.success"></div>
+                <button type="button" class="btn" @click="addEpisodicMemory()" x-show="inputMode.addEpisodic === 'json'">Add Episodic Memory</button>
+            </div>
+            
+            <!-- Form Input Mode -->
+            <form @submit.prevent="addEpisodicMemory()" class="form-section" :class="{ hidden: inputMode.addEpisodic === 'json' }">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="episodicSessionId">Session ID:</label>
+                        <input type="text" x-model="forms.addEpisodic.sessionId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="episodicGroupId">Group ID:</label>
+                        <input type="text" x-model="forms.addEpisodic.groupId">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="episodicAgentIds">Agent IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.addEpisodic.agentIds" placeholder="agent1,agent2">
+                    </div>
+                    <div class="form-group">
+                        <label for="episodicUserIds">User IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.addEpisodic.userIds" placeholder="user1,user2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="episodicProducer">Producer:</label>
+                        <input type="text" x-model="forms.addEpisodic.producer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="episodicProducedFor">Produced For:</label>
+                        <input type="text" x-model="forms.addEpisodic.producedFor" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodicContent">Episode Content:</label>
+                    <textarea x-model="forms.addEpisodic.episodeContent" required placeholder="Enter the episodic memory content..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="episodicType">Episode Type:</label>
+                        <input type="text" x-model="forms.addEpisodic.episodeType" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="episodicMetadata">Metadata (JSON):</label>
+                        <textarea x-model="forms.addEpisodic.metadata" placeholder='{"key": "value"}'></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">Add Episodic Memory</button>
+            </form>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.addEpisodic.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Adding episodic memory...</p>
+                </div>
+                <div x-show="!responses.addEpisodic.loading && responses.addEpisodic.data" class="response-content status-success" x-text="JSON.stringify(responses.addEpisodic.data, null, 2)"></div>
+                <div x-show="!responses.addEpisodic.loading && responses.addEpisodic.error" class="response-content status-error" x-text="responses.addEpisodic.error"></div>
+            </div>
+        </div>
+
+        <!-- MCP Server Endpoints -->
+        <div class="api-section">
+            <h2>MCP Server Endpoints</h2>
+            
+            <div class="endpoint-info">
+                <h4>MCP Add Session Memory</h4>
+                <p>Add memory via MCP server interface</p>
+            </div>
+            
+            <!-- Input Mode Toggle -->
+            <div class="input-mode-toggle">
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.mcpAddMemory === 'form' }" @click="inputMode.mcpAddMemory = 'form'">
+                    📝 Form Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.mcpAddMemory === 'json' }" @click="inputMode.mcpAddMemory = 'json'">
+                    📄 JSON Input
+                </button>
+            </div>
+            
+            <!-- JSON Input Mode -->
+            <div x-show="inputMode.mcpAddMemory === 'json'" class="form-group">
+                <label>JSON Payload:</label>
+                <textarea 
+                    x-model="jsonPayloads.mcpAddMemory" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "producer": "mcp_client",
+  "produced_for": "user1",
+  "episode_content": "MCP memory episode",
+  "episode_type": "mcp",
+  "metadata": {
+    "source": "mcp_server"
+  }
+}'></textarea>
+                <div x-show="jsonValidation.mcpAddMemory.error" class="json-validation error" x-text="jsonValidation.mcpAddMemory.error"></div>
+                <div x-show="jsonValidation.mcpAddMemory.success && !jsonValidation.mcpAddMemory.error" class="json-validation success" x-text="jsonValidation.mcpAddMemory.success"></div>
+                <button type="button" class="btn" @click="mcpAddMemory()" x-show="inputMode.mcpAddMemory === 'json'">MCP Add Memory</button>
+            </div>
+            
+            <!-- Form Input Mode -->
+            <form @submit.prevent="mcpAddMemory()" class="form-section" :class="{ hidden: inputMode.mcpAddMemory === 'json' }">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpSessionId">Session ID:</label>
+                        <input type="text" x-model="forms.mcpAddMemory.sessionId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpGroupId">Group ID:</label>
+                        <input type="text" x-model="forms.mcpAddMemory.groupId">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpAgentIds">Agent IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.mcpAddMemory.agentIds" placeholder="agent1,agent2">
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpUserIds">User IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.mcpAddMemory.userIds" placeholder="user1,user2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpProducer">Producer:</label>
+                        <input type="text" x-model="forms.mcpAddMemory.producer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpProducedFor">Produced For:</label>
+                        <input type="text" x-model="forms.mcpAddMemory.producedFor" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mcpContent">Episode Content:</label>
+                    <textarea x-model="forms.mcpAddMemory.episodeContent" required placeholder="Enter the MCP memory content..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpType">Episode Type:</label>
+                        <input type="text" x-model="forms.mcpAddMemory.episodeType" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpMetadata">Metadata (JSON):</label>
+                        <textarea x-model="forms.mcpAddMemory.metadata" placeholder='{"key": "value"}'></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">MCP Add Memory</button>
+            </form>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.mcpAddMemory.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Adding MCP memory...</p>
+                </div>
+                <div x-show="!responses.mcpAddMemory.loading && responses.mcpAddMemory.data" class="response-content status-success" x-text="JSON.stringify(responses.mcpAddMemory.data, null, 2)"></div>
+                <div x-show="!responses.mcpAddMemory.loading && responses.mcpAddMemory.error" class="response-content status-error" x-text="responses.mcpAddMemory.error"></div>
+            </div>
+            
+            <div class="endpoint-info">
+                <h4>MCP Search Session Memory</h4>
+                <p>Search memories via MCP server interface</p>
+            </div>
+            
+            <!-- Input Mode Toggle -->
+            <div class="input-mode-toggle">
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.mcpSearchMemory === 'form' }" @click="inputMode.mcpSearchMemory = 'form'">
+                    📝 Form Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.mcpSearchMemory === 'json' }" @click="inputMode.mcpSearchMemory = 'json'">
+                    📄 JSON Input
+                </button>
+            </div>
+            
+            <!-- JSON Input Mode -->
+            <div x-show="inputMode.mcpSearchMemory === 'json'" class="form-group">
+                <label>JSON Payload:</label>
+                <textarea 
+                    x-model="jsonPayloads.mcpSearchMemory" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  },
+  "query": "Search for MCP memories",
+  "filter": {
+    "source": "mcp_server"
+  },
+  "limit": 10
+}'></textarea>
+                <div x-show="jsonValidation.mcpSearchMemory.error" class="json-validation error" x-text="jsonValidation.mcpSearchMemory.error"></div>
+                <div x-show="jsonValidation.mcpSearchMemory.success && !jsonValidation.mcpSearchMemory.error" class="json-validation success" x-text="jsonValidation.mcpSearchMemory.success"></div>
+                <button type="button" class="btn" @click="mcpSearchMemory()" x-show="inputMode.mcpSearchMemory === 'json'">MCP Search Memory</button>
+            </div>
+            
+            <!-- Form Input Mode -->
+            <form @submit.prevent="mcpSearchMemory()" class="form-section" :class="{ hidden: inputMode.mcpSearchMemory === 'json' }">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpSearchSessionId">Session ID:</label>
+                        <input type="text" x-model="forms.mcpSearchMemory.sessionId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpSearchGroupId">Group ID:</label>
+                        <input type="text" x-model="forms.mcpSearchMemory.groupId">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpSearchAgentIds">Agent IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.mcpSearchMemory.agentIds" placeholder="agent1,agent2">
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpSearchUserIds">User IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.mcpSearchMemory.userIds" placeholder="user1,user2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mcpSearchQuery">Search Query:</label>
+                        <input type="text" x-model="forms.mcpSearchMemory.query" required placeholder="What are you looking for?">
+                    </div>
+                    <div class="form-group">
+                        <label for="mcpSearchLimit">Limit:</label>
+                        <input type="number" x-model="forms.mcpSearchMemory.limit" placeholder="10">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mcpSearchFilter">Filter (JSON):</label>
+                    <textarea x-model="forms.mcpSearchMemory.filter" placeholder='{"key": "value"}'></textarea>
+                </div>
+                
+                <button type="submit" class="btn">MCP Search Memory</button>
+            </form>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.mcpSearchMemory.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Searching MCP memories...</p>
+                </div>
+                <div x-show="!responses.mcpSearchMemory.loading && responses.mcpSearchMemory.data" class="response-content status-success" x-text="JSON.stringify(responses.mcpSearchMemory.data, null, 2)"></div>
+                <div x-show="!responses.mcpSearchMemory.loading && responses.mcpSearchMemory.error" class="response-content status-error" x-text="responses.mcpSearchMemory.error"></div>
+            </div>
+        </div>
+
+        <!-- Data Deletion -->
+        <div class="api-section">
+            <h2>Data Management</h2>
+            
+            <div class="endpoint-info">
+                <h4>Delete Session Data</h4>
+                <p>Delete all data for a specific session</p>
+            </div>
+            
+            <!-- Input Mode Toggle -->
+            <div class="input-mode-toggle">
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.deleteData === 'form' }" @click="inputMode.deleteData = 'form'">
+                    📝 Form Input
+                </button>
+                <button type="button" class="toggle-btn" :class="{ active: inputMode.deleteData === 'json' }" @click="inputMode.deleteData = 'json'">
+                    📄 JSON Input
+                </button>
+            </div>
+            
+            <!-- JSON Input Mode -->
+            <div x-show="inputMode.deleteData === 'json'" class="form-group">
+                <label>JSON Payload:</label>
+                <textarea 
+                    x-model="jsonPayloads.deleteData" 
+                    class="json-editor" 
+                    placeholder='{
+  "session": {
+    "session_id": "session123",
+    "group_id": "group456",
+    "agent_id": ["agent1", "agent2"],
+    "user_id": ["user1", "user2"]
+  }
+}'></textarea>
+                <div x-show="jsonValidation.deleteData.error" class="json-validation error" x-text="jsonValidation.deleteData.error"></div>
+                <div x-show="jsonValidation.deleteData.success && !jsonValidation.deleteData.error" class="json-validation success" x-text="jsonValidation.deleteData.success"></div>
+                <button type="button" class="btn btn-danger" @click="deleteData()" x-show="inputMode.deleteData === 'json'">Delete Session Data</button>
+            </div>
+            
+            <!-- Form Input Mode -->
+            <form @submit.prevent="deleteData()" class="form-section" :class="{ hidden: inputMode.deleteData === 'json' }">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deleteSessionId">Session ID:</label>
+                        <input type="text" x-model="forms.deleteData.sessionId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteGroupId">Group ID:</label>
+                        <input type="text" x-model="forms.deleteData.groupId">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deleteAgentIds">Agent IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.deleteData.agentIds" placeholder="agent1,agent2">
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteUserIds">User IDs (comma-separated):</label>
+                        <input type="text" x-model="forms.deleteData.userIds" placeholder="user1,user2">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-danger">Delete Session Data</button>
+            </form>
+            
+            <div class="response-area">
+                <h3>Response:</h3>
+                <div x-show="responses.deleteData.loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Deleting data...</p>
+                </div>
+                <div x-show="!responses.deleteData.loading && responses.deleteData.data" class="response-content status-success" x-text="JSON.stringify(responses.deleteData.data, null, 2)"></div>
+                <div x-show="!responses.deleteData.loading && responses.deleteData.error" class="response-content status-error" x-text="responses.deleteData.error"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function memMachineApp() {
+            return {
+                // Configuration
+                config: {
+                    baseUrl: 'http://127.0.0.1:8080/v1'
+                },
+                
+                // Status tracking
+                status: {
+                    loading: false,
+                    connected: false,
+                    message: 'Not checked'
+                },
+                
+                // Input mode tracking
+                inputMode: {
+                    addMemory: 'form',
+                    searchMemory: 'form',
+                    deleteData: 'form',
+                    addEpisodic: 'form',
+                    mcpAddMemory: 'form',
+                    mcpSearchMemory: 'form'
+                },
+                
+                // Raw payloads
+                rawPayloads: {
+                    addMemory: { contentType: 'application/json', customContentType: '', payload: '' },
+                    searchMemory: { contentType: 'application/json', customContentType: '', payload: '' },
+                    deleteData: { contentType: 'application/json', customContentType: '', payload: '' },
+                    addEpisodic: { contentType: 'application/json', customContentType: '', payload: '' },
+                    mcpAddMemory: { contentType: 'application/json', customContentType: '', payload: '' },
+                    mcpSearchMemory: { contentType: 'application/json', customContentType: '', payload: '' }
+                },
+                
+                // JSON payloads
+                jsonPayloads: {
+                    addMemory: '',
+                    searchMemory: '',
+                    deleteData: '',
+                    addEpisodic: '',
+                    mcpAddMemory: '',
+                    mcpSearchMemory: ''
+                },
+                
+                // JSON validation
+                jsonValidation: {
+                    addMemory: { error: null, success: null },
+                    searchMemory: { error: null, success: null },
+                    deleteData: { error: null, success: null },
+                    addEpisodic: { error: null, success: null },
+                    mcpAddMemory: { error: null, success: null },
+                    mcpSearchMemory: { error: null, success: null }
+                },
+                
+                // Form data
+                forms: {
+                    addMemory: {
+                        sessionId: '',
+                        groupId: '',
+                        agentIds: '',
+                        userIds: '',
+                        producer: '',
+                        producedFor: '',
+                        episodeContent: '',
+                        episodeType: '',
+                        metadata: ''
+                    },
+                    searchMemory: {
+                        sessionId: '',
+                        groupId: '',
+                        agentIds: '',
+                        userIds: '',
+                        query: '',
+                        limit: '',
+                        filter: ''
+                    },
+                    deleteData: {
+                        sessionId: '',
+                        groupId: '',
+                        agentIds: '',
+                        userIds: ''
+                    },
+                    filterSessions: {
+                        userId: '',
+                        groupId: '',
+                        agentId: ''
+                    },
+                    addEpisodic: {
+                        sessionId: '',
+                        groupId: '',
+                        agentIds: '',
+                        userIds: '',
+                        producer: '',
+                        producedFor: '',
+                        episodeContent: '',
+                        episodeType: '',
+                        metadata: ''
+                    },
+                    mcpAddMemory: {
+                        sessionId: '',
+                        groupId: '',
+                        agentIds: '',
+                        userIds: '',
+                        producer: '',
+                        producedFor: '',
+                        episodeContent: '',
+                        episodeType: '',
+                        metadata: ''
+                    },
+                    mcpSearchMemory: {
+                        sessionId: '',
+                        groupId: '',
+                        agentIds: '',
+                        userIds: '',
+                        query: '',
+                        limit: '',
+                        filter: ''
+                    }
+                },
+                
+                // Response data
+                responses: {
+                    addMemory: { loading: false, data: null, error: null },
+                    searchMemory: { loading: false, data: null, error: null },
+                    allSessions: { loading: false, data: null, error: null },
+                    filteredSessions: { loading: false, data: null, error: null },
+                    deleteData: { loading: false, data: null, error: null },
+                    addEpisodic: { loading: false, data: null, error: null },
+                    mcpAddMemory: { loading: false, data: null, error: null },
+                    mcpSearchMemory: { loading: false, data: null, error: null }
+                },
+                
+                // Initialize
+                init() {
+                    this.checkServerStatus();
+                    this.setupJsonValidation();
+                },
+                
+                // Setup JSON validation watchers
+                setupJsonValidation() {
+                    // Watch for changes in JSON payloads and validate
+                    this.$watch('jsonPayloads.addMemory', () => this.validateJson('addMemory'));
+                    this.$watch('jsonPayloads.searchMemory', () => this.validateJson('searchMemory'));
+                    this.$watch('jsonPayloads.deleteData', () => this.validateJson('deleteData'));
+                    this.$watch('jsonPayloads.addEpisodic', () => this.validateJson('addEpisodic'));
+                    this.$watch('jsonPayloads.mcpAddMemory', () => this.validateJson('mcpAddMemory'));
+                    this.$watch('jsonPayloads.mcpSearchMemory', () => this.validateJson('mcpSearchMemory'));
+                },
+                
+                // Validate JSON payload
+                validateJson(type) {
+                    const payload = this.jsonPayloads[type];
+                    const validation = this.jsonValidation[type];
+                    
+                    if (!payload.trim()) {
+                        validation.error = null;
+                        validation.success = null;
+                        return;
+                    }
+                    
+                    try {
+                        const parsed = JSON.parse(payload);
+                        validation.error = null;
+                        validation.success = '✅ Valid JSON';
+                        
+                        // Additional validation based on type
+                        if (type === 'addMemory') {
+                            if (!parsed.session || !parsed.session.session_id) {
+                                validation.error = '❌ Missing required field: session.session_id';
+                                validation.success = null;
+                            } else if (!parsed.producer) {
+                                validation.error = '❌ Missing required field: producer';
+                                validation.success = null;
+                            } else if (!parsed.produced_for) {
+                                validation.error = '❌ Missing required field: produced_for';
+                                validation.success = null;
+                            } else if (!parsed.episode_content) {
+                                validation.error = '❌ Missing required field: episode_content';
+                                validation.success = null;
+                            } else if (!parsed.episode_type) {
+                                validation.error = '❌ Missing required field: episode_type';
+                                validation.success = null;
+                            }
+                        } else if (type === 'searchMemory') {
+                            if (!parsed.session || !parsed.session.session_id) {
+                                validation.error = '❌ Missing required field: session.session_id';
+                                validation.success = null;
+                            } else if (!parsed.query) {
+                                validation.error = '❌ Missing required field: query';
+                                validation.success = null;
+                            }
+                        } else if (type === 'deleteData') {
+                            if (!parsed.session || !parsed.session.session_id) {
+                                validation.error = '❌ Missing required field: session.session_id';
+                                validation.success = null;
+                            }
+                        } else if (type === 'addEpisodic') {
+                            if (!parsed.session || !parsed.session.session_id) {
+                                validation.error = '❌ Missing required field: session.session_id';
+                                validation.success = null;
+                            } else if (!parsed.producer) {
+                                validation.error = '❌ Missing required field: producer';
+                                validation.success = null;
+                            } else if (!parsed.produced_for) {
+                                validation.error = '❌ Missing required field: produced_for';
+                                validation.success = null;
+                            } else if (!parsed.episode_content) {
+                                validation.error = '❌ Missing required field: episode_content';
+                                validation.success = null;
+                            } else if (!parsed.episode_type) {
+                                validation.error = '❌ Missing required field: episode_type';
+                                validation.success = null;
+                            }
+                        } else if (type === 'mcpAddMemory') {
+                            if (!parsed.session || !parsed.session.session_id) {
+                                validation.error = '❌ Missing required field: session.session_id';
+                                validation.success = null;
+                            } else if (!parsed.producer) {
+                                validation.error = '❌ Missing required field: producer';
+                                validation.success = null;
+                            } else if (!parsed.produced_for) {
+                                validation.error = '❌ Missing required field: produced_for';
+                                validation.success = null;
+                            } else if (!parsed.episode_content) {
+                                validation.error = '❌ Missing required field: episode_content';
+                                validation.success = null;
+                            } else if (!parsed.episode_type) {
+                                validation.error = '❌ Missing required field: episode_type';
+                                validation.success = null;
+                            }
+                        } else if (type === 'mcpSearchMemory') {
+                            if (!parsed.session || !parsed.session.session_id) {
+                                validation.error = '❌ Missing required field: session.session_id';
+                                validation.success = null;
+                            } else if (!parsed.query) {
+                                validation.error = '❌ Missing required field: query';
+                                validation.success = null;
+                            }
+                        }
+                    } catch (error) {
+                        validation.error = '❌ Invalid JSON: ' + error.message;
+                        validation.success = null;
+                    }
+                },
+                
+                // Utility functions
+                parseCommaSeparated(value) {
+                    if (!value) return null;
+                    return value.split(',').map(item => item.trim()).filter(item => item);
+                },
+                
+                parseJson(value) {
+                    if (!value) return null;
+                    try {
+                        return JSON.parse(value);
+                    } catch (e) {
+                        return null;
+                    }
+                },
+                
+                // Server status check
+                async checkServerStatus() {
+                    this.status.loading = true;
+                    try {
+                        const response = await fetch('/api/health');
+                        const data = await response.json();
+                        this.status.connected = response.ok;
+                        this.status.message = data.message || 'Server is running';
+                    } catch (error) {
+                        this.status.connected = false;
+                        this.status.message = 'Server connection failed: ' + error.message;
+                    } finally {
+                        this.status.loading = false;
+                    }
+                },
+                
+                // API request helper
+                async makeApiRequest(endpoint, method = 'GET', data = null, contentType = 'application/json') {
+                    const requestBody = {
+                        apiBase: this.config.baseUrl,
+                        data: data,
+                        contentType: contentType
+                    };
+                    
+                    const response = await fetch(`/api${endpoint}`, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: method !== 'GET' ? JSON.stringify(requestBody) : undefined
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.error || `HTTP ${response.status}: ${result.message || 'Unknown error'}`);
+                    }
+                    
+                    return result;
+                },
+                
+                // Add Memory
+                async addMemory() {
+                    this.responses.addMemory.loading = true;
+                    this.responses.addMemory.error = null;
+                    
+                    try {
+                        let requestBody, contentType;
+                        
+                        if (this.inputMode.addMemory === 'json') {
+                            // Use JSON payload
+                            if (!this.jsonPayloads.addMemory.trim()) {
+                                throw new Error('JSON payload is required');
+                            }
+                            if (this.jsonValidation.addMemory.error) {
+                                throw new Error('Invalid JSON payload: ' + this.jsonValidation.addMemory.error);
+                            }
+                            requestBody = JSON.parse(this.jsonPayloads.addMemory);
+                            contentType = 'application/json';
+                        } else if (this.inputMode.addMemory === 'raw') {
+                            // Use raw payload
+                            if (!this.rawPayloads.addMemory.payload.trim()) {
+                                throw new Error('Raw payload is required');
+                            }
+                            requestBody = this.rawPayloads.addMemory.payload;
+                            contentType = this.rawPayloads.addMemory.contentType === 'custom' 
+                                ? this.rawPayloads.addMemory.customContentType 
+                                : this.rawPayloads.addMemory.contentType;
+                        } else {
+                            // Use form data
+                            const sessionData = {
+                                session_id: this.forms.addMemory.sessionId,
+                                group_id: this.forms.addMemory.groupId || null,
+                                agent_id: this.parseCommaSeparated(this.forms.addMemory.agentIds),
+                                user_id: this.parseCommaSeparated(this.forms.addMemory.userIds)
+                            };
+                            
+                            requestBody = {
+                                session: sessionData,
+                                producer: this.forms.addMemory.producer,
+                                produced_for: this.forms.addMemory.producedFor,
+                                episode_content: this.forms.addMemory.episodeContent,
+                                episode_type: this.forms.addMemory.episodeType,
+                                metadata: this.parseJson(this.forms.addMemory.metadata)
+                            };
+                            contentType = 'application/json';
+                        }
+                        
+                        const result = await this.makeApiRequest('/memories', 'POST', requestBody, contentType);
+                        this.responses.addMemory.data = result;
+                    } catch (error) {
+                        this.responses.addMemory.error = error.message;
+                    } finally {
+                        this.responses.addMemory.loading = false;
+                    }
+                },
+                
+                // Search Memory
+                async searchMemory() {
+                    this.responses.searchMemory.loading = true;
+                    this.responses.searchMemory.error = null;
+                    
+                    try {
+                        let requestBody, contentType;
+                        
+                        if (this.inputMode.searchMemory === 'json') {
+                            // Use JSON payload
+                            if (!this.jsonPayloads.searchMemory.trim()) {
+                                throw new Error('JSON payload is required');
+                            }
+                            if (this.jsonValidation.searchMemory.error) {
+                                throw new Error('Invalid JSON payload: ' + this.jsonValidation.searchMemory.error);
+                            }
+                            requestBody = JSON.parse(this.jsonPayloads.searchMemory);
+                            contentType = 'application/json';
+                        } else if (this.inputMode.searchMemory === 'raw') {
+                            // Use raw payload
+                            if (!this.rawPayloads.searchMemory.payload.trim()) {
+                                throw new Error('Raw payload is required');
+                            }
+                            requestBody = this.rawPayloads.searchMemory.payload;
+                            contentType = this.rawPayloads.searchMemory.contentType === 'custom' 
+                                ? this.rawPayloads.searchMemory.customContentType 
+                                : this.rawPayloads.searchMemory.contentType;
+                        } else {
+                            // Use form data
+                            const sessionData = {
+                                session_id: this.forms.searchMemory.sessionId,
+                                group_id: this.forms.searchMemory.groupId || null,
+                                agent_id: this.parseCommaSeparated(this.forms.searchMemory.agentIds),
+                                user_id: this.parseCommaSeparated(this.forms.searchMemory.userIds)
+                            };
+                            
+                            requestBody = {
+                                session: sessionData,
+                                query: this.forms.searchMemory.query,
+                                filter: this.parseJson(this.forms.searchMemory.filter),
+                                limit: parseInt(this.forms.searchMemory.limit) || null
+                            };
+                            contentType = 'application/json';
+                        }
+                        
+                        const result = await this.makeApiRequest('/memories/search', 'POST', requestBody, contentType);
+                        this.responses.searchMemory.data = result;
+                    } catch (error) {
+                        this.responses.searchMemory.error = error.message;
+                    } finally {
+                        this.responses.searchMemory.loading = false;
+                    }
+                },
+                
+                // Get All Sessions
+                async getAllSessions() {
+                    this.responses.allSessions.loading = true;
+                    this.responses.allSessions.error = null;
+                    
+                    try {
+                        const result = await this.makeApiRequest('/sessions');
+                        this.responses.allSessions.data = result;
+                    } catch (error) {
+                        this.responses.allSessions.error = error.message;
+                    } finally {
+                        this.responses.allSessions.loading = false;
+                    }
+                },
+                
+                // Get User Sessions
+                async getUserSessions() {
+                    if (!this.forms.filterSessions.userId) {
+                        alert('Please enter a User ID');
+                        return;
+                    }
+                    
+                    this.responses.filteredSessions.loading = true;
+                    this.responses.filteredSessions.error = null;
+                    
+                    try {
+                        const result = await this.makeApiRequest(`/users/${this.forms.filterSessions.userId}/sessions`);
+                        this.responses.filteredSessions.data = result;
+                    } catch (error) {
+                        this.responses.filteredSessions.error = error.message;
+                    } finally {
+                        this.responses.filteredSessions.loading = false;
+                    }
+                },
+                
+                // Get Group Sessions
+                async getGroupSessions() {
+                    if (!this.forms.filterSessions.groupId) {
+                        alert('Please enter a Group ID');
+                        return;
+                    }
+                    
+                    this.responses.filteredSessions.loading = true;
+                    this.responses.filteredSessions.error = null;
+                    
+                    try {
+                        const result = await this.makeApiRequest(`/groups/${this.forms.filterSessions.groupId}/sessions`);
+                        this.responses.filteredSessions.data = result;
+                    } catch (error) {
+                        this.responses.filteredSessions.error = error.message;
+                    } finally {
+                        this.responses.filteredSessions.loading = false;
+                    }
+                },
+                
+                // Get Agent Sessions
+                async getAgentSessions() {
+                    if (!this.forms.filterSessions.agentId) {
+                        alert('Please enter an Agent ID');
+                        return;
+                    }
+                    
+                    this.responses.filteredSessions.loading = true;
+                    this.responses.filteredSessions.error = null;
+                    
+                    try {
+                        const result = await this.makeApiRequest(`/agents/${this.forms.filterSessions.agentId}/sessions`);
+                        this.responses.filteredSessions.data = result;
+                    } catch (error) {
+                        this.responses.filteredSessions.error = error.message;
+                    } finally {
+                        this.responses.filteredSessions.loading = false;
+                    }
+                },
+                
+                // Delete Data
+                async deleteData() {
+                    if (!confirm('Are you sure you want to delete this session data? This action cannot be undone.')) {
+                        return;
+                    }
+                    
+                    this.responses.deleteData.loading = true;
+                    this.responses.deleteData.error = null;
+                    
+                    try {
+                        let requestBody;
+                        
+                        if (this.inputMode.deleteData === 'json') {
+                            // Use JSON payload
+                            if (!this.jsonPayloads.deleteData.trim()) {
+                                throw new Error('JSON payload is required');
+                            }
+                            if (this.jsonValidation.deleteData.error) {
+                                throw new Error('Invalid JSON payload: ' + this.jsonValidation.deleteData.error);
+                            }
+                            requestBody = JSON.parse(this.jsonPayloads.deleteData);
+                        } else {
+                            // Use form data
+                            const sessionData = {
+                                session_id: this.forms.deleteData.sessionId,
+                                group_id: this.forms.deleteData.groupId || null,
+                                agent_id: this.parseCommaSeparated(this.forms.deleteData.agentIds),
+                                user_id: this.parseCommaSeparated(this.forms.deleteData.userIds)
+                            };
+                            
+                            requestBody = { session: sessionData };
+                        }
+                        
+                        const result = await this.makeApiRequest('/memories', 'DELETE', requestBody);
+                        this.responses.deleteData.data = result;
+                    } catch (error) {
+                        this.responses.deleteData.error = error.message;
+                    } finally {
+                        this.responses.deleteData.loading = false;
+                    }
+                },
+                
+                // Add Episodic Memory
+                async addEpisodicMemory() {
+                    this.responses.addEpisodic.loading = true;
+                    this.responses.addEpisodic.error = null;
+                    
+                    try {
+                        let requestBody;
+                        
+                        if (this.inputMode.addEpisodic === 'json') {
+                            // Use JSON payload
+                            if (!this.jsonPayloads.addEpisodic.trim()) {
+                                throw new Error('JSON payload is required');
+                            }
+                            if (this.jsonValidation.addEpisodic.error) {
+                                throw new Error('Invalid JSON payload: ' + this.jsonValidation.addEpisodic.error);
+                            }
+                            requestBody = JSON.parse(this.jsonPayloads.addEpisodic);
+                        } else {
+                            // Use form data
+                            const sessionData = {
+                                session_id: this.forms.addEpisodic.sessionId,
+                                group_id: this.forms.addEpisodic.groupId || null,
+                                agent_id: this.parseCommaSeparated(this.forms.addEpisodic.agentIds),
+                                user_id: this.parseCommaSeparated(this.forms.addEpisodic.userIds)
+                            };
+                            
+                            requestBody = {
+                                session: sessionData,
+                                producer: this.forms.addEpisodic.producer,
+                                produced_for: this.forms.addEpisodic.producedFor,
+                                episode_content: this.forms.addEpisodic.episodeContent,
+                                episode_type: this.forms.addEpisodic.episodeType,
+                                metadata: this.parseJson(this.forms.addEpisodic.metadata)
+                            };
+                        }
+                        
+                        const result = await this.makeApiRequest('/memories/episodic', 'POST', requestBody);
+                        this.responses.addEpisodic.data = result;
+                    } catch (error) {
+                        this.responses.addEpisodic.error = error.message;
+                    } finally {
+                        this.responses.addEpisodic.loading = false;
+                    }
+                },
+                
+                // MCP Add Memory
+                async mcpAddMemory() {
+                    this.responses.mcpAddMemory.loading = true;
+                    this.responses.mcpAddMemory.error = null;
+                    
+                    try {
+                        let requestBody;
+                        
+                        if (this.inputMode.mcpAddMemory === 'json') {
+                            // Use JSON payload
+                            if (!this.jsonPayloads.mcpAddMemory.trim()) {
+                                throw new Error('JSON payload is required');
+                            }
+                            if (this.jsonValidation.mcpAddMemory.error) {
+                                throw new Error('Invalid JSON payload: ' + this.jsonValidation.mcpAddMemory.error);
+                            }
+                            requestBody = JSON.parse(this.jsonPayloads.mcpAddMemory);
+                        } else {
+                            // Use form data
+                            const sessionData = {
+                                session_id: this.forms.mcpAddMemory.sessionId,
+                                group_id: this.forms.mcpAddMemory.groupId || null,
+                                agent_id: this.parseCommaSeparated(this.forms.mcpAddMemory.agentIds),
+                                user_id: this.parseCommaSeparated(this.forms.mcpAddMemory.userIds)
+                            };
+                            
+                            requestBody = {
+                                session: sessionData,
+                                producer: this.forms.mcpAddMemory.producer,
+                                produced_for: this.forms.mcpAddMemory.producedFor,
+                                episode_content: this.forms.mcpAddMemory.episodeContent,
+                                episode_type: this.forms.mcpAddMemory.episodeType,
+                                metadata: this.parseJson(this.forms.mcpAddMemory.metadata)
+                            };
+                        }
+                        
+                        const result = await this.makeApiRequest('/mcp/add_session_memory', 'POST', requestBody);
+                        this.responses.mcpAddMemory.data = result;
+                    } catch (error) {
+                        this.responses.mcpAddMemory.error = error.message;
+                    } finally {
+                        this.responses.mcpAddMemory.loading = false;
+                    }
+                },
+                
+                // MCP Search Memory
+                async mcpSearchMemory() {
+                    this.responses.mcpSearchMemory.loading = true;
+                    this.responses.mcpSearchMemory.error = null;
+                    
+                    try {
+                        let requestBody;
+                        
+                        if (this.inputMode.mcpSearchMemory === 'json') {
+                            // Use JSON payload
+                            if (!this.jsonPayloads.mcpSearchMemory.trim()) {
+                                throw new Error('JSON payload is required');
+                            }
+                            if (this.jsonValidation.mcpSearchMemory.error) {
+                                throw new Error('Invalid JSON payload: ' + this.jsonValidation.mcpSearchMemory.error);
+                            }
+                            requestBody = JSON.parse(this.jsonPayloads.mcpSearchMemory);
+                        } else {
+                            // Use form data
+                            const sessionData = {
+                                session_id: this.forms.mcpSearchMemory.sessionId,
+                                group_id: this.forms.mcpSearchMemory.groupId || null,
+                                agent_id: this.parseCommaSeparated(this.forms.mcpSearchMemory.agentIds),
+                                user_id: this.parseCommaSeparated(this.forms.mcpSearchMemory.userIds)
+                            };
+                            
+                            requestBody = {
+                                session: sessionData,
+                                query: this.forms.mcpSearchMemory.query,
+                                filter: this.parseJson(this.forms.mcpSearchMemory.filter),
+                                limit: parseInt(this.forms.mcpSearchMemory.limit) || null
+                            };
+                        }
+                        
+                        const result = await this.makeApiRequest('/mcp/search_session_memory', 'POST', requestBody);
+                        this.responses.mcpSearchMemory.data = result;
+                    } catch (error) {
+                        this.responses.mcpSearchMemory.error = error.message;
+                    } finally {
+                        this.responses.mcpSearchMemory.loading = false;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
