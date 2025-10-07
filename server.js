@@ -27,8 +27,11 @@ async function proxyRequest(req, res, endpoint) {
             headers: {
                 'Content-Type': contentType,
             },
-            timeout: 10000, // 10 second timeout
+            timeout: 30000, // 30 second timeout
         };
+
+        // Clean up the request body to avoid sending unnecessary fields
+        delete req.body.apiBase;
 
         if (req.method !== 'GET' && req.body.data) {
             // Handle different content types
@@ -55,7 +58,11 @@ async function proxyRequest(req, res, endpoint) {
         }
 
         const response = await axios(config);
-        res.json(response.data);
+        if (response.data === null) {
+            res.status(response.status).json({ message: 'No content' });
+        } else {
+            res.status(response.status).json(response.data);
+        }
     } catch (error) {
         console.error('API Proxy Error:', error.message);
         
