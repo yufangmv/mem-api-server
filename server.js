@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 
@@ -7,7 +6,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
@@ -28,6 +26,7 @@ async function proxyRequest(req, res, endpoint) {
                 'Content-Type': contentType,
             },
             timeout: 30000, // 30 second timeout
+            maxRedirects: 0, // Disable redirects
         };
 
         // Clean up the request body to avoid sending unnecessary fields
@@ -57,6 +56,14 @@ async function proxyRequest(req, res, endpoint) {
             }
         }
 
+        console.info('\nCheck request+url:', req.method, req.originalUrl, '->', url);
+        console.info('Request headers:', config.headers);
+        if (config.data) {
+            console.info('Request payload:', config.data);
+        } else {
+            console.info('No request payload');
+        }
+
         const response = await axios(config);
         if (response.data === null) {
             res.status(response.status).json({ message: 'No content' });
@@ -64,8 +71,10 @@ async function proxyRequest(req, res, endpoint) {
             res.status(response.status).json(response.data);
         }
     } catch (error) {
-        console.error('API Proxy Error:', error.message);
-        
+        const red = '\x1b[31m';
+        const reset = '\x1b[0m';
+        console.error(`${red}API Proxy Error:`, error.message, `${reset}`);
+
         if (error.response) {
             res.status(error.response.status).json({
                 error: error.response.data || error.message,
@@ -158,6 +167,14 @@ app.get('/api/health', (req, res) => {
         message: 'MemMachine UI Server is running',
         timestamp: new Date().toISOString()
     });
+});
+
+// Other not matching cases
+app.all('*', (req, res) => {
+    const blue = '\x1b[34m';
+    const reset = '\x1b[0m';
+    console.warn(`${blue}\nUnsupported request+url:`, req.method, req.originalUrl, `${reset}`);
+    res.status(404).json({ error: 'Endpoint not found' });
 });
 
 // Serve the main page
