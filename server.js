@@ -15,7 +15,7 @@ const DEFAULT_API_BASE = 'http://127.0.0.1:8080/v1';
 // Proxy function to handle API requests
 async function proxyRequest(req, res, endpoint) {
     try {
-        const apiBase = req.body.apiBase || DEFAULT_API_BASE;
+        const apiBase = DEFAULT_API_BASE;
         const url = `${apiBase}${endpoint}`;
         const contentType = req.body.contentType || 'application/json';
         
@@ -28,9 +28,6 @@ async function proxyRequest(req, res, endpoint) {
             timeout: 30000, // 30 second timeout
             maxRedirects: 0, // Disable redirects
         };
-
-        // Clean up the request body to avoid sending unnecessary fields
-        delete req.body.apiBase;
 
         if (req.method !== 'GET' && req.body.data) {
             // Handle different content types
@@ -46,8 +43,14 @@ async function proxyRequest(req, res, endpoint) {
                 } else {
                     // Already parsed JSON object, clean it
                     const cleanPayload = { ...req.body.data };
-                    delete cleanPayload.apiBase;
-                    delete cleanPayload.contentType;
+                    if (cleanPayload.apiBase) {
+                        console.warn('Warning: apiBase should not be sent in the request body. It is used only for proxying. So it will be removed.');
+                        delete cleanPayload.apiBase;
+                    }
+                    if (cleanPayload.contentType) {
+                        console.warn('Warning: contentType should not be sent in the request body. It is used only for proxying. So it will be removed.');
+                        delete cleanPayload.contentType;
+                    }
                     config.data = cleanPayload;
                 }
             } else {
@@ -56,7 +59,7 @@ async function proxyRequest(req, res, endpoint) {
             }
         }
 
-        console.info('\nCheck request+url:', req.method, req.originalUrl, '->', url);
+        console.info('------request+url:', req.method, req.originalUrl, '->', url);
         console.info('Request headers:', config.headers);
         if (config.data) {
             console.info('Request payload:', config.data);
@@ -70,10 +73,9 @@ async function proxyRequest(req, res, endpoint) {
         } else {
             res.status(response.status).json(response.data);
         }
+
+        console.info('Response status:', response.status);
     } catch (error) {
-        const red = '\x1b[31m';
-        const reset = '\x1b[0m';
-        console.error(`${red}API Proxy Error:`, error.message, `${reset}`);
 
         if (error.response) {
             res.status(error.response.status).json({
@@ -91,6 +93,11 @@ async function proxyRequest(req, res, endpoint) {
                 status: 500
             });
         }
+
+        // Log error in red color
+        const red = '\x1b[31m';
+        const reset = '\x1b[0m';
+        console.error(`${red}API Proxy Error:`, error.message, `${reset}`, "\n");
     }
 }
 
@@ -169,17 +176,39 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Serve the main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Other not matching cases
 app.all('*', (req, res) => {
     const blue = '\x1b[34m';
     const reset = '\x1b[0m';
-    console.warn(`${blue}\nUnsupported request+url:`, req.method, req.originalUrl, `${reset}`);
-    res.status(404).json({ error: 'Endpoint not found' });
+    console.warn(`${blue}***Unsupported request+url:`, req.method, req.originalUrl, `${reset}`);
+    proxyRequest(req, res, req.originalUrl);
 });
 
-// Serve the main page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        const red = '\x1b[31m';
+        const reset = '\x1b[0m';
+        console.error(`${red}\n===Invalid JSON received:${reset}`);
+        console.error(`${red}Method:${reset}`, req.method);
+        console.error(`${red}URL:${reset}`, req.originalUrl);
+        console.error(`${red}Body:${reset}`, err.message,'\n');
+        res.status(400).json({ error: 'Invalid JSON in request body', detail: err.message });
+    } else if (err instanceof URIError) {
+        const red = '\x1b[31m';
+        const reset = '\x1b[0m';
+        console.error(`${red}\n===Malformed URL received:${reset}`);
+        console.error(`${red}Method:${reset}`, req.method);
+        console.error(`${red}URL:${reset}`, req.originalUrl, '\n');
+        console.error(`${red}Body:${reset}`, err.message,'\n');
+        res.status(400).json({ error: 'Malformed URL', detail: err.message });
+    } else {
+        next(err);
+    }
 });
 
 // Start server
